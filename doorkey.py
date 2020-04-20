@@ -9,7 +9,7 @@ TR = 2 # Turn Right
 PK = 3 # Pickup Key
 UD = 4 # Unlock Door
 
-def BFS(queue,cost_to_goal,env_grid):
+def BFS(queue,cost_to_goal,env_grid,policy):
 
     new_queue = []
     cost = 1
@@ -17,7 +17,7 @@ def BFS(queue,cost_to_goal,env_grid):
     x_max = cost_to_goal.shape[1]-1
     print('Here')
     if queue == []:
-        return cost_to_goal
+        return cost_to_goal,policy
 
     for i in range(len(queue)):
 
@@ -32,6 +32,10 @@ def BFS(queue,cost_to_goal,env_grid):
             if current_cost + cost < next_cost:
                 cost_to_goal[current_idy,current_idx+1] = current_cost + cost
                 new_queue.append([current_idx+1,current_idy])
+                policy[(current_idx+1,current_idy)] = [(current_idx,current_idy)]
+            elif current_cost + cost == next_cost:
+                policy[(current_idx+1,current_idy)].append((current_idx,current_idy))
+
 
 
         if current_idx-1 >=0 and current_idx-1 <= x_max and env_grid[current_idy,current_idx-1]==1:
@@ -40,7 +44,10 @@ def BFS(queue,cost_to_goal,env_grid):
             next_cost = cost_to_goal[current_idy,current_idx-1]
             if current_cost + cost < next_cost:
                 cost_to_goal[current_idy,current_idx-1] = current_cost + cost   
-                new_queue.append([current_idx-1,current_idy])     
+                new_queue.append([current_idx-1,current_idy])
+                policy[(current_idx-1,current_idy)] = [(current_idx,current_idy)]
+            elif current_cost + cost == next_cost:
+                policy[(current_idx-1,current_idy)].append((current_idx,current_idy))     
 
         if current_idy+1 >=0 and current_idy+1 <= y_max and env_grid[current_idy+1,current_idx]==1:
 
@@ -49,6 +56,9 @@ def BFS(queue,cost_to_goal,env_grid):
             if current_cost + cost < next_cost:
                 cost_to_goal[current_idy+1,current_idx] = current_cost + cost
                 new_queue.append([current_idx,current_idy+1])
+                policy[(current_idx,current_idy+1)] = [(current_idx,current_idy)]
+            elif current_cost + cost == next_cost:
+                policy[(current_idx,current_idy+1)].append((current_idx,current_idy))
 
         if current_idy-1 >=0 and current_idy-1 <= y_max and env_grid[current_idy-1,current_idx]==1:
 
@@ -57,24 +67,60 @@ def BFS(queue,cost_to_goal,env_grid):
             if current_cost + cost < next_cost:
                 cost_to_goal[current_idy-1,current_idx] = current_cost + cost
                 new_queue.append([current_idx,current_idy-1])
+                policy[(current_idx,current_idy-1)] = [(current_idx,current_idy)]
+            elif current_cost + cost == next_cost:
+                policy[(current_idx,current_idy-1)].append((current_idx,current_idy))
 
-    return BFS(new_queue,cost_to_goal,env_grid)
+    return BFS(new_queue,cost_to_goal,env_grid,policy)
 
-def get_policy(start,goal,cost_to_goal):
+def get_shortest_path(shortest_path,shortest_path_controls,policy,start,start_ori,goal):
 
-    y_max = cost_to_goal.shape[0]-1
-    x_max = cost_to_goal.shape[1]-1
+    print('Ala re')
+    if start == goal:
 
-    for i in range(y_max):
+        return shortest_path_controls
 
-        for j in range(x_max):
+    # if len(policy[start]) == 1:
+    #     x1,y1 = start
+    #     x2,y2 = policy[start]
+    #     next_ori = (x2-x1,y2-y1)
+    #     change_ori = tuple(np.subtract(next_ori,start_ori))
+    #     shortest_path_controls[start] = [(x2,y2),change_ori]
+    #     get_shortest_path(shortest_path_controls,policy,(x2,y2),next_ori,goal)
+    
+    # else:
+    shortest_path.append((start))
+    next_ = tuple( np.add(start,start_ori) ) 
+    try:
+        policy[start].index(next_)
+        shortest_path_controls.append(0)
+        get_shortest_path(shortest_path,shortest_path_controls,policy,next_,start_ori,goal)
+    except ValueError:
+        next_ = policy[start][0]
+        x1,y1 = start
+        x2,y2 = next_
+        next_ori = (x2-x1,y2-y1)
+        # change_ori = tuple(np.subtract(next_ori,start_ori))
+        if np.dot(next_ori,start_ori)==1:
+            shortest_path_controls.append(0) #Move Forward
+        elif np.dot(next_ori,start_ori)==-1:
+            shortest_path_controls.append(5) #Move Backward
+        elif np.cross(next_ori,start_ori)==1:
+            shortest_path_controls.append(1) #Move Left
+        else:
+            shortest_path_controls.append(2) #Move Right
+        get_shortest_path(shortest_path,shortest_path_controls,policy,(x2,y2),next_ori,goal)
+    
+    return shortest_path_controls
+            
 
-            cos
 
-def get_shortest_path(env_grid,start,goal):
 
-    policy
-    cost_to_goal = np.full(env_grid.shape,np.inf)
+
+
+
+
+
 
 
 def doorkey_problem(env):
@@ -125,10 +171,29 @@ if __name__ == '__main__':
     print(info)
     env_grid = gym_minigrid.minigrid.Grid.encode(env.grid)[:,:,0].T
     print(env_grid)
-    start = [(2,6)]
+    goal = [(2,6)]
     cost_to_goal = np.full((8,8),np.inf)
     cost_to_goal[6,2] = 0
-    print(BFS(start,cost_to_goal,env_grid))
+    policy = {}
+    print(goal)
+    cost_to_goal,policy = BFS(goal.copy(),cost_to_goal,env_grid,policy)
+    print(goal)
+    # cost_to_goal = np.full(env_grid.shape,np.inf)
+    # policy = {}
+    # cost_to_goal,policy = BFS(goal,cost_to_goal,env_grid,policy)
+    print(cost_to_goal)
+    print(policy)
+
+    print('------------------------')
+    print(goal)
+    shortest_path_controls=[]
+    shortest_path = []
+    start = (2,4)
+    start_ori = (-1,0)
+    print(get_shortest_path(shortest_path,shortest_path_controls,policy,start,start_ori,goal[0]))
+    print(shortest_path)
+    plot_env(env)
+    
 
         
         

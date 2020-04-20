@@ -78,7 +78,7 @@ def get_shortest_path(shortest_path,shortest_path_controls,policy,start,start_or
     print('Ala re')
     if start == goal:
 
-        return shortest_path_controls
+        return
 
     # if len(policy[start]) == 1:
     #     x1,y1 = start
@@ -111,17 +111,35 @@ def get_shortest_path(shortest_path,shortest_path_controls,policy,start,start_or
             shortest_path_controls.append(2) #Move Right
         get_shortest_path(shortest_path,shortest_path_controls,policy,(x2,y2),next_ori,goal)
     
-    return shortest_path_controls
+    return
+
+def move_robot(shortest_path_controls,env):
+
+    for i in range(len(shortest_path_controls)):
+
+        if shortest_path_controls[i] == 0:
+
+            cost, done = step(env, MF)
+            plot_env(env)
+        
+        elif shortest_path_controls[i] == 1:
+
+            cost, done = step(env, TL)
+            cost, done = step(env, MF)
+            plot_env(env)         
+        
+        elif shortest_path_controls[i] == 2:
             
+            cost, done = step(env, TR)
+            cost, done = step(env, MF)
+            plot_env(env)
 
+        elif shortest_path_controls[i] == 5:
 
-
-
-
-
-
-
-
+            cost, done = step(env, TL)
+            cost, done = step(env, TL)
+            cost, done = step(env, MF)
+            plot_env(env)
 
 def doorkey_problem(env):
     '''
@@ -140,6 +158,34 @@ def doorkey_problem(env):
     '''
     optim_act_seq = [TL, MF, PK, TL, UD, MF, MF, MF, MF, TR, MF]
     return optim_act_seq
+
+def Start_To_Goal_direct(env_grid,start,goal):
+
+    policy_direct = {}
+    cost_to_goal_direct = np.full(env_grid.shape,np.inf)
+    cost_to_goal_direct[goal[1],goal[0]] = 0
+    cost_to_goal_direct,policy_direct = BFS([goal].copy(),cost_to_goal_direct,env_grid,policy_direct)
+    return cost_to_goal_direct[start[1],start[0]],policy_direct
+
+def Start_To_Goal_viaDoor(env,start,start_ori,key,door,goal):
+
+    policy_key = {}
+    cost_to_key = np.full(env.shape,np.inf)
+    cost_to_key[key[1],key[0]] = 0
+    cost_to_key,policy_key = BFS([key].copy,cost_to_key,env_grid,policy_key) 
+
+    policy_door = {}
+    cost_to_door = np.full(env.shape,np.inf)
+    cost_to_door[door[1],door[0]] = 0
+    cost_to_door,policy_door = BFS([door].copy,cost_to_door,env_grid,policy_door) 
+
+    policy_goal = {}
+    cost_to_goal = np.full(env.shape,np.inf)
+    cost_to_goal[goal[1],goal[0]] = 0
+    cost_to_goal,policy_goal = BFS([goal].copy(),cost_to_goal,env_grid,policy_goal) 
+
+    return cost_to_key+cost_to_door+cost_to_goal,policy_key,policy_door,policy_goal
+
 
 
 def main():
@@ -176,23 +222,31 @@ if __name__ == '__main__':
     cost_to_goal[6,2] = 0
     policy = {}
     print(goal)
-    cost_to_goal,policy = BFS(goal.copy(),cost_to_goal,env_grid,policy)
+    # cost_to_goal,policy = BFS(goal.copy(),cost_to_goal,env_grid,policy)
     print(goal)
     # cost_to_goal = np.full(env_grid.shape,np.inf)
     # policy = {}
     # cost_to_goal,policy = BFS(goal,cost_to_goal,env_grid,policy)
-    print(cost_to_goal)
-    print(policy)
+    # print(cost_to_goal)
+    # print(policy)
 
-    print('------------------------')
-    print(goal)
-    shortest_path_controls=[]
-    shortest_path = []
+    # print('------------------------')
+    # print(goal)
+    # shortest_path_controls=[]
+    # shortest_path = []
     start = (2,4)
-    start_ori = (-1,0)
-    print(get_shortest_path(shortest_path,shortest_path_controls,policy,start,start_ori,goal[0]))
-    print(shortest_path)
-    plot_env(env)
+    # start_ori = (-1,0)
+    # print(get_shortest_path(shortest_path,shortest_path_controls,policy,start,start_ori,goal[0]))
+    # print(shortest_path)
+    # plot_env(env)
+    # #move_robot(shortest_path_controls,env)
+    goal = (6,6)
+    print([goal].copy())
+    cost_to_goal_direct,policy_direct =  Start_To_Goal_direct(env_grid,start,goal)
+    print(cost_to_goal_direct)
+    print(policy_direct)
+
+
     
 
         

@@ -73,32 +73,17 @@ def BFS(queue,cost_to_goal,env_grid,policy):
 
     return BFS(new_queue,cost_to_goal,env_grid,policy)
 
-def get_shortest_path(shortest_path,shortest_path_controls,policy,start,start_ori,goal):
+def get_shortest_path(shortest_path,shortest_path_controls,policy,start,start_ori,goal,best_pickup_position=None):
 
     # print('Ala re')
     if start == goal:
 
         return
-
-    # if len(policy[start]) == 1:
-    #     x1,y1 = start
-    #     x2,y2 = policy[start]
-    #     next_ori = (x2-x1,y2-y1)
-    #     change_ori = tuple(np.subtract(next_ori,start_ori))
-    #     shortest_path_controls[start] = [(x2,y2),change_ori]
-    #     get_shortest_path(shortest_path_controls,policy,(x2,y2),next_ori,goal)
-    
-    # else:
     shortest_path.append((start))
-    next_ = tuple( np.add(start,start_ori) ) 
-    try:
-        policy[start].index(next_)
-        shortest_path_controls.append(0)
-        get_shortest_path(shortest_path,shortest_path_controls,policy,next_,start_ori,goal)
-    except ValueError:
-        next_ = policy[start][0]
+    if best_pickup_position in policy[start]:
+
         x1,y1 = start
-        x2,y2 = next_
+        x2,y2 = best_pickup_position
         # next_ori = (x2-x1,y1-y2)
         next_ori = (x2-x1,y2-y1)
         # change_ori = tuple(np.subtract(next_ori,start_ori))
@@ -111,6 +96,30 @@ def get_shortest_path(shortest_path,shortest_path_controls,policy,start,start_or
         else:
             shortest_path_controls.append(2) #Move Right
         get_shortest_path(shortest_path,shortest_path_controls,policy,(x2,y2),next_ori,goal)
+    
+    else:
+        
+        next_ = tuple( np.add(start,start_ori) ) 
+        try:
+            policy[start].index(next_)
+            shortest_path_controls.append(0)
+            get_shortest_path(shortest_path,shortest_path_controls,policy,next_,start_ori,goal,best_pickup_position)
+        except ValueError:
+            next_ = policy[start][0]
+            x1,y1 = start
+            x2,y2 = next_
+            # next_ori = (x2-x1,y1-y2)
+            next_ori = (x2-x1,y2-y1)
+            # change_ori = tuple(np.subtract(next_ori,start_ori))
+            if np.dot(next_ori,start_ori)==1:
+                shortest_path_controls.append(0) #Move Forward
+            elif np.dot(next_ori,start_ori)==-1:
+                shortest_path_controls.append(5) #Move Backward
+            elif np.cross(next_ori,start_ori)==1:
+                shortest_path_controls.append(1) #Move Left
+            else:
+                shortest_path_controls.append(2) #Move Right
+            get_shortest_path(shortest_path,shortest_path_controls,policy,(x2,y2),next_ori,goal,best_pickup_position)
     
     return
 
@@ -263,49 +272,63 @@ def Start_To_Goal_direct(env_grid,start,goal):
 
 def Start_To_Goal_viaDoor(env_grid,start,start_ori,key,door,goal):
 
+    # Get the policy to pickup key
     policy_key = {}
     cost_to_key = np.full(env_grid.shape,np.inf)
     cost_to_key[key[1],key[0]] = 0
     cost_to_key,policy_key = BFS([key].copy(),cost_to_key,env_grid,policy_key) 
     cost_key = cost_to_key[start[1],start[0]]
-    shortest_path_key = []
-    shortest_path_controls_key = []
-    get_shortest_path(shortest_path_key,shortest_path_controls_key,policy_key,start,start_ori,key)
-    robot_key_pos = shortest_path_key[-1]
-    key_ori = (key[0]-robot_key_pos[0],key[1]-robot_key_pos[1])
-    env_grid[key[1],key[0]] = 1
-    seq_key = controls_to_seq(shortest_path_controls_key,3)
-    print(f'key_ori = {key_ori}')
-    print(cost_to_key)
-    print(shortest_path_key)
+
+    # Get the possible pickup positions using the policy
     pickup_positions = get_pickup_positions(policy_key,key)
     print(pickup_positions)
     visualize_policy(policy_key,env_grid)
-    
 
-    policy_door = {}
-    cost_to_door = np.full(env_grid.shape,np.inf)
-    cost_to_door[door[1],door[0]] = 0
-    cost_to_door,policy_door = BFS([door].copy(),cost_to_door,env_grid,policy_door) 
-    cost_door = cost_to_door[robot_key_pos[1],robot_key_pos[0]]
-    shortest_path_door = []
-    shortest_path_controls_door = []
-    get_shortest_path(shortest_path_door,shortest_path_controls_door,policy_door,robot_key_pos,key_ori,door)
-    robot_door_pos = shortest_path_door[-1]
-    door_ori = (door[0]-robot_door_pos[0],robot_door_pos[1]-door[1])
-    env_grid[door[1],door[0]] = 1
-    seq_door = controls_to_seq(shortest_path_controls_door,4)
-    print(door_ori)
-    print(shortest_path_controls_door)
-
-
+    # Get the cost to reach any position from the start position
+    ## Used to determine the cost to reach pickup location
     policy_start = {}
     cost_from_start = np.full(env_grid.shape,np.inf)
     cost_from_start[start[1],start[0]] = 0
     cost_from_start,policy_start = BFS([start].copy(),cost_from_start,env_grid,policy_start)
     print(cost_from_start)
 
-    print(f'Best = {get_best_pickup_position(cost_from_start,cost_to_door,pickup_positions)}')
+    # Since the key will be picked up, it'll be free space
+    env_grid[key[1],key[0]] = 1
+
+    # Get the policy to unlock the door
+    policy_door = {}
+    cost_to_door = np.full(env_grid.shape,np.inf)
+    cost_to_door[door[1],door[0]] = 0
+    cost_to_door,policy_door = BFS([door].copy(),cost_to_door,env_grid,policy_door)
+
+    # Get the best pickup position
+    best_pickup_position = get_best_pickup_position(cost_from_start,cost_to_door,pickup_positions)
+    print(best_pickup_position)
+
+    # Get the shortest path using the best pickup position
+    shortest_path_key = []
+    shortest_path_controls_key = []
+    get_shortest_path(shortest_path_key,shortest_path_controls_key,policy_key,start,start_ori,key,best_pickup_position)
+    robot_key_pos = shortest_path_key[-1]
+    key_ori = (key[0]-robot_key_pos[0],key[1]-robot_key_pos[1])
+    
+    seq_key = controls_to_seq(shortest_path_controls_key,3)
+    
+    print(f'key_ori = {key_ori}')
+    print(cost_to_key)
+    print(shortest_path_key)
+  
+    shortest_path_door = []
+    shortest_path_controls_door = []
+    get_shortest_path(shortest_path_door,shortest_path_controls_door,policy_door,robot_key_pos,key_ori,door)
+    robot_door_pos = shortest_path_door[-1]
+    door_ori = (door[0]-robot_door_pos[0],robot_door_pos[1]-door[1])
+    env_grid[door[1],door[0]] = 1
+    seq_door = controls_to_seq(shortest_path_controls_door,4)   
+    cost_door = cost_to_door[robot_key_pos[1],robot_key_pos[0]]
+
+    print(door_ori)
+    print(shortest_path_controls_door)
 
     policy_goal = {}
     cost_to_goal = np.full(env_grid.shape,np.inf)
@@ -348,7 +371,7 @@ def main():
 if __name__ == '__main__':
     # example_use_of_gym_env()
     # main()
-    env_path = './envs/doorkey-8x8-shortcut.env'
+    env_path = './envs/doorkey-6x6-normal.env'
     env, info = load_env(env_path) # load an environment
     print(info)
     env_grid = gym_minigrid.minigrid.Grid.encode(env.grid)[:,:,0].T

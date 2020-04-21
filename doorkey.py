@@ -151,7 +151,34 @@ def move_robot(shortest_path_controls,env):
             cost, done = step(env, MF)
             plot_env(env)
 
-def visualize_policy(policy,env_grid,pickup_positions=None,door=None):
+def visualize_costs(cost_matrix,flag=None):
+
+    fig, ax = plt.subplots()
+    for i in range(cost_matrix.shape[0]):
+        for j in range(cost_matrix.shape[1]):
+            text = ax.text(j, i, cost_matrix[i, j],ha="center", va="center", color="w") 
+
+    if flag==1:
+        ax.set_title('Cost to key for: '+ env_name)
+        im = ax.imshow(cost_matrix)
+        fig.savefig('./costs/' + env_name + '_costKey.png')
+
+    elif flag==2:
+        ax.set_title('Cost to door for: '+ env_name)
+        im = ax.imshow(cost_matrix)
+        fig.savefig('./costs/' + env_name + '_costDoor.png')
+
+    elif flag==3:
+        ax.set_title('Cost to goal (open door) for: '+ env_name)
+        im = ax.imshow(cost_matrix)
+        fig.savefig('./costs/' + env_name + '_costGoal_open.png')
+    
+    elif flag==4:
+        ax.set_title('Cost to goal (closed door) for: '+ env_name)
+        im = ax.imshow(cost_matrix)
+        fig.savefig('./costs/' + env_name + '_costGoal_closed.png')
+
+def visualize_policy(policy,env_grid,pickup_positions=None,door=None,flag=None,goal_positions_open=None,goal_positions=None):
 
     x_max = env_grid.shape[0]
     y_max = env_grid.shape[1]
@@ -175,6 +202,8 @@ def visualize_policy(policy,env_grid,pickup_positions=None,door=None):
     plt.grid()
 
     ax.set_aspect('equal')
+    plt.xlim(0,x_max)
+    plt.ylim(y_max,0)
 
     if pickup_positions is not None:
 
@@ -182,18 +211,34 @@ def visualize_policy(policy,env_grid,pickup_positions=None,door=None):
 
             pos_x,pos_y = pickup_positions[pos]
             ax.fill([pos_x,pos_x,pos_x+1,pos_x+1],[pos_y,pos_y+1,pos_y+1,pos_y],"b")
+            ax.set_title('Policy for key: '+ env_name)
+            fig.savefig('./policy/' + env_name + '_policyKey.png')
 
     if door is not None:
 
         door_x,door_y = door
         ax.fill([door_x-1,door_x-1,door_x,door_x],[door_y,door_y+1,door_y+1,door_y],'tab:purple')
         ax.fill([door_x,door_x,door_x+1,door_x+1],[door_y,door_y+1,door_y+1,door_y],"y")
+        ax.set_title('Policy for door: '+ env_name)
+        fig.savefig('./policy/' + env_name + '_policyDoor.png')
 
-    plt.xlim(0,x_max)
-    plt.ylim(y_max,0)
+    if goal_positions_open is not None:
 
-    plt.title('How to plot a vector in matplotlib ?',fontsize=10)
-    plt.show()
+        for pos in range(len(goal_positions_open)):
+
+            pos_x,pos_y = goal_positions_open[pos]
+            ax.fill([pos_x,pos_x,pos_x+1,pos_x+1],[pos_y,pos_y+1,pos_y+1,pos_y],"g")
+            ax.set_title('Policy for goal (door open): '+ env_name)
+        fig.savefig('./policy/' + env_name + '_policyGoal_open.png')
+    
+    if goal_positions is not None:
+
+        for pos in range(len(goal_positions)):
+
+            pos_x,pos_y = goal_positions[pos]
+            ax.fill([pos_x,pos_x,pos_x+1,pos_x+1],[pos_y,pos_y+1,pos_y+1,pos_y],"g")
+            ax.set_title('Policy for goal (door closed): '+ env_name)
+        fig.savefig('./policy/' + env_name + '_policyGoal_closed.png')
 
 def controls_to_seq(shortest_path_controls,flag):
 
@@ -281,7 +326,7 @@ def Start_To_Goal_direct(env_grid,start,goal):
     cost_to_goal_direct = np.full(env_grid.shape,np.inf)
     cost_to_goal_direct[goal[1],goal[0]] = 0
     cost_to_goal_direct,policy_direct = BFS([goal].copy(),cost_to_goal_direct,env_grid,policy_direct)
-    return cost_to_goal_direct[start[1],start[0]],policy_direct
+    return cost_to_goal_direct,policy_direct
 
 def Start_To_Goal_viaDoor(env_grid,start,start_ori,key,door,goal):
 
@@ -291,6 +336,7 @@ def Start_To_Goal_viaDoor(env_grid,start,start_ori,key,door,goal):
     cost_to_key[key[1],key[0]] = 0
     cost_to_key,policy_key = BFS([key].copy(),cost_to_key,env_grid,policy_key) 
     cost_key = cost_to_key[start[1],start[0]]-1
+    visualize_costs(cost_to_key,1)
 
     # Get the possible pickup positions using the policy
     pickup_positions = get_pickup_positions(policy_key,key)
@@ -313,7 +359,9 @@ def Start_To_Goal_viaDoor(env_grid,start,start_ori,key,door,goal):
     cost_to_door = np.full(env_grid.shape,np.inf)
     cost_to_door[door[1],door[0]] = 0
     cost_to_door,policy_door = BFS([door].copy(),cost_to_door,env_grid,policy_door)
+    #Visualize
     visualize_policy(policy_door,env_grid,door=door)
+    visualize_costs(cost_to_door,2)
 
     # Get the best pickup position
     best_pickup_position = get_best_pickup_position(cost_from_start,cost_to_door,pickup_positions)
@@ -344,12 +392,18 @@ def Start_To_Goal_viaDoor(env_grid,start,start_ori,key,door,goal):
     print(door_ori)
     print(shortest_path_controls_door)
 
+    # Get the policy to reach Goal
     policy_goal = {}
     cost_to_goal = np.full(env_grid.shape,np.inf)
     cost_to_goal[goal[1],goal[0]] = 0
-    cost_to_goal,policy_goal = BFS([goal].copy(),cost_to_goal,env_grid,policy_goal) 
-    print(cost_to_goal)
+    cost_to_goal,policy_goal = BFS([goal].copy(),cost_to_goal,env_grid,policy_goal)
     cost_goal = cost_to_goal[robot_door_pos[1],robot_door_pos[0]]
+    goal_positions_open = get_pickup_positions(policy_goal,goal)
+    print(f'posis = {goal_positions_open}')
+    visualize_policy(policy_goal,env_grid,goal_positions_open=goal_positions_open)
+    visualize_costs(cost_to_goal,3)
+
+    # Get the shortest path to reach Goal after unlocking the door
     shortest_path_goal = []
     shortest_path_controls_goal = []
     get_shortest_path(shortest_path_goal,shortest_path_controls_goal,policy_goal,robot_door_pos,door_ori,goal)
@@ -401,13 +455,14 @@ if __name__ == '__main__':
 
     cost_to_goal_direct,policy_direct =  Start_To_Goal_direct(env_grid,start,goal)
 
+    cost_to_goal_direct_val = cost_to_goal_direct[start[1],start[0]]
 
     cost_viaDoor , seq_viaDoor = Start_To_Goal_viaDoor(env_grid,start,start_ori,key,door,goal)
     print(cost_viaDoor)
     print(seq_viaDoor)
     plot_env(env)
 
-    if cost_to_goal_direct > cost_viaDoor:
+    if cost_to_goal_direct_val > cost_viaDoor:
     
         seq_best = seq_viaDoor
     
@@ -418,6 +473,11 @@ if __name__ == '__main__':
         get_shortest_path(shortest_path_direct,shortest_path_controls_direct,policy_direct,start,start_ori,goal)
         seq_direct = controls_to_seq(shortest_path_controls_direct,0)
         seq_best = seq_direct
+
+        goal_positions_closed = get_pickup_positions(policy_direct,goal)
+        visualize_policy(policy_direct,env_grid,goal_positions=goal_positions_closed)
+        visualize_costs(cost_to_goal_direct,4)
+        print(f'direct = {cost_to_goal_direct}')
 
     draw_gif_from_seq(seq_best,env,path='./gif/'+ env_name + '.gif')
     

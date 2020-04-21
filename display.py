@@ -27,3 +27,22 @@ plt.ylim(8,0)
 
 plt.title('How to plot a vector in matplotlib ?',fontsize=10)
 plt.show()
+
+fig, ax = plt.subplots()
+grid = np.array([[20, 20, 20, 20, 20, 20,],
+ [20,  3.,  2.,  1. , 0., 20,],
+ [20,  4. , 3. ,20,  1., 20,],
+ [20,  5., 20, 20,  2., 20,],
+ [20,  6. , 5. , 4.,  3., 20,],
+ [20, 20, 20, 20, 20, 20]])
+
+for i in range(6):
+    for j in range(6):
+        text = ax.text(j, i, grid[i, j],ha="center", va="center", color="w")
+        print(text)
+
+# text(0.5, 0.5, 'matplotlib', horizontalalignment='center',verticalalignment='center', transform=ax.transAxes)
+
+
+im = ax.imshow(grid)
+plt.show()

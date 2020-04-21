@@ -99,13 +99,14 @@ def get_shortest_path(shortest_path,shortest_path_controls,policy,start,start_or
         next_ = policy[start][0]
         x1,y1 = start
         x2,y2 = next_
-        next_ori = (x2-x1,y1-y2)
+        # next_ori = (x2-x1,y1-y2)
+        next_ori = (x2-x1,y2-y1)
         # change_ori = tuple(np.subtract(next_ori,start_ori))
         if np.dot(next_ori,start_ori)==1:
             shortest_path_controls.append(0) #Move Forward
         elif np.dot(next_ori,start_ori)==-1:
             shortest_path_controls.append(5) #Move Backward
-        elif np.cross(next_ori,start_ori)==-1:
+        elif np.cross(next_ori,start_ori)==1:
             shortest_path_controls.append(1) #Move Left
         else:
             shortest_path_controls.append(2) #Move Right
@@ -141,6 +142,37 @@ def move_robot(shortest_path_controls,env):
             cost, done = step(env, MF)
             plot_env(env)
 
+def visualize_policy(policy,env_grid):
+
+    x_max = env_grid.shape[0]
+    y_max = env_grid.shape[1]
+
+    fig, ax = plt.subplots()
+    
+    for ids in policy:
+
+        X = ids[0]
+        Y = ids[1]
+        next_list = policy[ids]
+
+        for alpha in range(len(next_list)):
+
+            next_id = next_list[alpha]
+            U = (next_id[0] - X)*0.5
+            V = (next_id[1] - Y)*(-0.5)
+
+            q = ax.quiver(X+0.5, Y+0.5, U, V,units='xy' ,scale=1)
+
+    plt.grid()
+
+    ax.set_aspect('equal')
+
+    plt.xlim(0,x_max)
+    plt.ylim(y_max,0)
+
+    plt.title('How to plot a vector in matplotlib ?',fontsize=10)
+    plt.show()
+
 def controls_to_seq(shortest_path_controls,flag):
 
     seq = []
@@ -168,6 +200,16 @@ def controls_to_seq(shortest_path_controls,flag):
     if flag:
         seq[-1] = flag
     return seq
+
+def get_pickup_positions(policy_key,key):
+
+    pickup_positions = []
+    for dict_key in policy_key:
+
+        if key in policy_key[dict_key]:
+            pickup_positions.append(dict_key)
+
+    return pickup_positions
 
 def doorkey_problem(env):
     '''
@@ -206,12 +248,15 @@ def Start_To_Goal_viaDoor(env_grid,start,start_ori,key,door,goal):
     shortest_path_controls_key = []
     get_shortest_path(shortest_path_key,shortest_path_controls_key,policy_key,start,start_ori,key)
     robot_key_pos = shortest_path_key[-1]
-    key_ori = (key[0]-robot_key_pos[0],robot_key_pos[1]-key[1])
+    key_ori = (key[0]-robot_key_pos[0],key[1]-robot_key_pos[1])
     env_grid[key[1],key[0]] = 1
     seq_key = controls_to_seq(shortest_path_controls_key,3)
     print(f'key_ori = {key_ori}')
     print(cost_to_key)
     print(shortest_path_key)
+    print(get_pickup_positions(policy_key,key))
+    visualize_policy(policy_key,env_grid)
+    
 
     policy_door = {}
     cost_to_door = np.full(env_grid.shape,np.inf)
@@ -299,7 +344,7 @@ if __name__ == '__main__':
     # #move_robot(shortest_path_controls,env)
     goal = (6,6)
     start = tuple(info['init_agent_pos'])
-    start_ori = (0,-1)#tuple(info['init_agent_dir'])
+    start_ori = tuple(info['init_agent_dir'])
     key = tuple(info['key_pos'])
     door = tuple(info['door_pos'])
     goal = tuple(info['goal_pos'])
@@ -312,6 +357,7 @@ if __name__ == '__main__':
     print(cost_viaDoor)
     print(seq)
     plot_env(env)
+    # draw_gif_from_seq(seq,env,path='./gif/doorkey-6x6-shortcut.gif')
 
     
 

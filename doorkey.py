@@ -211,6 +211,30 @@ def get_pickup_positions(policy_key,key):
 
     return pickup_positions
 
+def get_best_pickup_position(cost_to_key,cost_to_door,pickup_positions):
+
+    costs = []
+    for num in range(len(pickup_positions)):
+
+        cost1 = cost_to_key[pickup_positions[num][1],pickup_positions[num][0]]
+        cost2 = cost_to_door[pickup_positions[num][1],pickup_positions[num][0]]
+        total_cost = cost1+cost2
+        costs.append(total_cost)
+
+    costs_copy = costs.copy()
+    costs_copy.sort()
+    min_cost = costs_copy[0]
+    print(f'all={costs}')
+    if costs.count(min_cost)==1:
+
+        return pickup_positions[costs.index(min_cost)]
+    
+    else:
+
+        return None
+
+
+
 def doorkey_problem(env):
     '''
     You are required to find the optimal path in
@@ -254,7 +278,8 @@ def Start_To_Goal_viaDoor(env_grid,start,start_ori,key,door,goal):
     print(f'key_ori = {key_ori}')
     print(cost_to_key)
     print(shortest_path_key)
-    print(get_pickup_positions(policy_key,key))
+    pickup_positions = get_pickup_positions(policy_key,key)
+    print(pickup_positions)
     visualize_policy(policy_key,env_grid)
     
 
@@ -272,6 +297,15 @@ def Start_To_Goal_viaDoor(env_grid,start,start_ori,key,door,goal):
     seq_door = controls_to_seq(shortest_path_controls_door,4)
     print(door_ori)
     print(shortest_path_controls_door)
+
+
+    policy_start = {}
+    cost_from_start = np.full(env_grid.shape,np.inf)
+    cost_from_start[start[1],start[0]] = 0
+    cost_from_start,policy_start = BFS([start].copy(),cost_from_start,env_grid,policy_start)
+    print(cost_from_start)
+
+    print(f'Best = {get_best_pickup_position(cost_from_start,cost_to_door,pickup_positions)}')
 
     policy_goal = {}
     cost_to_goal = np.full(env_grid.shape,np.inf)
@@ -314,7 +348,7 @@ def main():
 if __name__ == '__main__':
     # example_use_of_gym_env()
     # main()
-    env_path = './envs/doorkey-8x8-normal.env'
+    env_path = './envs/doorkey-8x8-shortcut.env'
     env, info = load_env(env_path) # load an environment
     print(info)
     env_grid = gym_minigrid.minigrid.Grid.encode(env.grid)[:,:,0].T

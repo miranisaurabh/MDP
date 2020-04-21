@@ -20,6 +20,8 @@ plt.grid()
 
 ax.set_aspect('equal')
 
+ax.fill([0,0,1,1], [0,1,1,0])
+
 plt.xlim(0,8)
 plt.ylim(8,0)
 

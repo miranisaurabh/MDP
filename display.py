@@ -46,3 +46,6 @@ for i in range(6):
 
 im = ax.imshow(grid)
 plt.show()
+
+# plt.plot([1,2,3,4,5])
+# plt.show()

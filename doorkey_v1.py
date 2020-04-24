@@ -161,22 +161,22 @@ def visualize_costs(cost_matrix,flag=None):
     if flag==1:
         ax.set_title('Cost to key for: '+ env_name)
         im = ax.imshow(cost_matrix)
-        fig.savefig('./costs/' + env_name + '_costKey.png')
+        # fig.savefig('./costs/' + env_name + '_costKey.png')
 
     elif flag==2:
         ax.set_title('Cost to door for: '+ env_name)
         im = ax.imshow(cost_matrix)
-        fig.savefig('./costs/' + env_name + '_costDoor.png')
+        # fig.savefig('./costs/' + env_name + '_costDoor.png')
 
     elif flag==3:
         ax.set_title('Cost to goal (open door) for: '+ env_name)
         im = ax.imshow(cost_matrix)
-        fig.savefig('./costs/' + env_name + '_costGoal_open.png')
+        # fig.savefig('./costs/' + env_name + '_costGoal_open.png')
     
     elif flag==4:
         ax.set_title('Cost to goal (closed door) for: '+ env_name)
         im = ax.imshow(cost_matrix)
-        fig.savefig('./costs/' + env_name + '_costGoal_closed.png')
+        # fig.savefig('./costs/' + env_name + '_costGoal_closed.png')
 
 def visualize_policy(policy,env_grid,pickup_positions=None,door=None,flag=None,goal_positions_open=None,goal_positions=None):
 
@@ -212,7 +212,7 @@ def visualize_policy(policy,env_grid,pickup_positions=None,door=None,flag=None,g
             pos_x,pos_y = pickup_positions[pos]
             ax.fill([pos_x,pos_x,pos_x+1,pos_x+1],[pos_y,pos_y+1,pos_y+1,pos_y],"b")
             ax.set_title('Policy for key: '+ env_name)
-            fig.savefig('./policy/' + env_name + '_policyKey.png')
+            # fig.savefig('./policy/' + env_name + '_policyKey.png')
 
     if door is not None:
 
@@ -220,7 +220,7 @@ def visualize_policy(policy,env_grid,pickup_positions=None,door=None,flag=None,g
         ax.fill([door_x-1,door_x-1,door_x,door_x],[door_y,door_y+1,door_y+1,door_y],'tab:purple')
         ax.fill([door_x,door_x,door_x+1,door_x+1],[door_y,door_y+1,door_y+1,door_y],"y")
         ax.set_title('Policy for door: '+ env_name)
-        fig.savefig('./policy/' + env_name + '_policyDoor.png')
+        # fig.savefig('./policy/' + env_name + '_policyDoor.png')
 
     if goal_positions_open is not None:
 
@@ -229,7 +229,7 @@ def visualize_policy(policy,env_grid,pickup_positions=None,door=None,flag=None,g
             pos_x,pos_y = goal_positions_open[pos]
             ax.fill([pos_x,pos_x,pos_x+1,pos_x+1],[pos_y,pos_y+1,pos_y+1,pos_y],"g")
             ax.set_title('Policy for goal (door open): '+ env_name)
-        fig.savefig('./policy/' + env_name + '_policyGoal_open.png')
+        # fig.savefig('./policy/' + env_name + '_policyGoal_open.png')
     
     if goal_positions is not None:
 
@@ -238,126 +238,7 @@ def visualize_policy(policy,env_grid,pickup_positions=None,door=None,flag=None,g
             pos_x,pos_y = goal_positions[pos]
             ax.fill([pos_x,pos_x,pos_x+1,pos_x+1],[pos_y,pos_y+1,pos_y+1,pos_y],"g")
             ax.set_title('Policy for goal (door closed): '+ env_name)
-        fig.savefig('./policy/' + env_name + '_policyGoal_closed.png')
-
-def visualize_value_function(start,pickup_positions,door,goal_positions,shortest_path_key=None,shortest_path_door=None,shortest_path_goal=None,shortest_path_direct=None):
-
-    plt_pickup = {}
-    plt_pickup[0] =[]
-    plt_pickup[1]=[]
-    plt_pickup[2]=[]
-    plt_pickup[3]=[]
-    label_pickup = ['Pickup position 1','Pickup position 2','Pickup position 3','Pickup position 4']
-
-    plt_door = []
-    plt_goal = {}
-    plt_goal[0] =[]
-    plt_goal[1]=[]
-    plt_goal[2]=[]
-    plt_goal[3]=[]
-    env_grid_value = gym_minigrid.minigrid.Grid.encode(env.grid)[:,:,0].T
-    label_goal = ['Goal Approach 1','Goal Approach 2','Goal Approach 3','Goal Approach 4']
-    
-    plt.figure()
-    if shortest_path_key is not None:
-        
-        for i in range(len(shortest_path_key)):
-
-            next_pos = shortest_path_key[i]
-            policy_next = {}
-            cost_from_next = np.full(env_grid_value.shape,np.inf)
-            cost_from_next[next_pos[1],next_pos[0]] = 0
-            cost_from_next,policy_next = BFS([next_pos].copy(),cost_from_next,env_grid_value,policy_next)
-            plt_door.append(cost_from_next[door[1],door[0]-1])
-            
-            for j in range(len(pickup_positions)):
-
-                posi = pickup_positions[j]
-                plt_pickup[j].append(cost_from_next[posi[1],posi[0]])
-            
-            for k in range(len(goal_positions)):
-
-                posi = goal_positions[k]
-                plt_goal[k].append(cost_from_next[posi[1],posi[0]])
-
-        for i in range(1,len(shortest_path_door)):
-
-            next_pos = shortest_path_door[i]
-            policy_next = {}
-            cost_from_next = np.full(env_grid_value.shape,np.inf)
-            cost_from_next[next_pos[1],next_pos[0]] = 0
-            cost_from_next,policy_next = BFS([next_pos].copy(),cost_from_next,env_grid_value,policy_next)
-            plt_door.append(cost_from_next[door[1],door[0]-1])
-            
-            for j in range(len(pickup_positions)):
-
-                posi = pickup_positions[j]
-                plt_pickup[j].append(cost_from_next[posi[1],posi[0]])
-            
-            for k in range(len(goal_positions)):
-
-                posi = goal_positions[k]
-                plt_goal[k].append(cost_from_next[posi[1],posi[0]])     
-        
-        env_grid_value[door[1],door[0]] = 1
-
-        for i in range(1,len(shortest_path_goal)):
-
-            next_pos = shortest_path_goal[i]
-            policy_next = {}
-            cost_from_next = np.full(env_grid_value.shape,np.inf)
-            cost_from_next[next_pos[1],next_pos[0]] = 0
-            cost_from_next,policy_next = BFS([next_pos].copy(),cost_from_next,env_grid_value,policy_next)
-            plt_door.append(cost_from_next[door[1],door[0]-1])
-            
-            for j in range(len(pickup_positions)):
-
-                posi = pickup_positions[j]
-                plt_pickup[j].append(cost_from_next[posi[1],posi[0]])
-            
-            for k in range(len(goal_positions)):
-
-                posi = goal_positions[k]
-                plt_goal[k].append(cost_from_next[posi[1],posi[0]]) 
-        
-    elif shortest_path_direct is not None:
-    
-        for i in range(len(shortest_path_direct)):
-
-            next_pos = shortest_path_direct[i]
-            policy_next = {}
-            cost_from_next = np.full(env_grid_value.shape,np.inf)
-            cost_from_next[next_pos[1],next_pos[0]] = 0
-            cost_from_next,policy_next = BFS([next_pos].copy(),cost_from_next,env_grid_value,policy_next)
-            plt_door.append(cost_from_next[door[1],door[0]-1])
-            
-            for j in range(len(pickup_positions)):
-
-                posi = pickup_positions[j]
-                plt_pickup[j].append(cost_from_next[posi[1],posi[0]])
-            
-            for k in range(len(goal_positions)):
-
-                posi = goal_positions[k]
-                plt_goal[k].append(cost_from_next[posi[1],posi[0]])
-            
-
-
-    plt.plot(plt_door,label='Unlock door position')
-    for j in range(len(pickup_positions)):
-        plt.plot(plt_pickup[j],':',label = label_pickup[j])
-    for k in range(len(goal_positions)):
-        plt.plot(plt_goal[k],'-.',label=label_goal[k])
-    # plt.plot(plt_goal[1],'o',label=label_goal[1])
-    plt.legend()
-    plt.title('Value function: ' + env_name)
-    # plt.xlim([0,4])
-    plt.savefig('./value/' + env_name + '_valueFunction.png')
-            
-
-
-
-
+        # fig.savefig('./policy/' + env_name + '_policyGoal_closed.png')
 
 def controls_to_seq(shortest_path_controls,flag):
 
@@ -530,10 +411,7 @@ def Start_To_Goal_viaDoor(env_grid,start,start_ori,key,door,goal):
 
     seq = seq_key + seq_door + seq_goal
 
-
-    # visualize_value_function(start,pickup_positions,door,goal_positions_open,shortest_path_key=shortest_path_key,shortest_path_door=shortest_path_door,shortest_path_goal=shortest_path_goal)
-
-    return cost_key+cost_door+cost_goal,seq,pickup_positions
+    return cost_key+cost_door+cost_goal,seq
 
 
 
@@ -562,10 +440,27 @@ if __name__ == '__main__':
     # example_use_of_gym_env()
     # main()
 
-    env_name = 'doorkey-8x8-direct'
-    # env_name = 'example-8x8'
-    env_path = './envs/'+ env_name +'.env'
-    env, info = load_env(env_path) # load an environment
+    env_name = 'doorkey-6x6-direct'
+    # env_path = './envs/'+ env_name +'.env'
+    # env, info = load_env(env_path) # load an environment
+    env = generate_random_env(seed=-1, task='MiniGrid-DoorKey-8x8-v0')
+    info = {
+        'height': env.height,
+        'width': env.width,
+        'init_agent_pos': env.agent_pos,
+        'init_agent_dir': env.dir_vec
+        }
+    for i in range(env.height):
+        for j in range(env.width):
+            if isinstance(env.grid.get(j, i),
+                          gym_minigrid.minigrid.Key):
+                info['key_pos'] = np.array([j, i])
+            elif isinstance(env.grid.get(j, i),
+                            gym_minigrid.minigrid.Door):
+                info['door_pos'] = np.array([j, i])
+            elif isinstance(env.grid.get(j, i),
+                            gym_minigrid.minigrid.Goal):
+                info['goal_pos'] = np.array([j, i]) 
     print(info)
     env_grid = gym_minigrid.minigrid.Grid.encode(env.grid)[:,:,0].T
     print(env_grid)
@@ -580,7 +475,7 @@ if __name__ == '__main__':
 
     cost_to_goal_direct_val = cost_to_goal_direct[start[1],start[0]]
 
-    cost_viaDoor , seq_viaDoor,pickup_positions = Start_To_Goal_viaDoor(env_grid,start,start_ori,key,door,goal)
+    cost_viaDoor , seq_viaDoor = Start_To_Goal_viaDoor(env_grid,start,start_ori,key,door,goal)
     print(cost_viaDoor)
     print(seq_viaDoor)
     plot_env(env)
@@ -601,9 +496,8 @@ if __name__ == '__main__':
         visualize_policy(policy_direct,env_grid,goal_positions=goal_positions_closed)
         visualize_costs(cost_to_goal_direct,4)
         print(f'direct = {cost_to_goal_direct}')
-        visualize_value_function(start,pickup_positions,door,goal_positions_closed,shortest_path_direct=shortest_path_direct)
-
-    draw_gif_from_seq(seq_best,env,path='./gif/'+ env_name + '.gif')
+    print(seq_best)
+    # draw_gif_from_seq(seq_best,env,path='./gif/'+ env_name + '.gif')
     
 
     

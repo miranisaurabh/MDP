@@ -60,7 +60,7 @@ def generate_random_env(seed, task):
         'MiniGrid-DoorKey-8x8-v0'
     '''
     if seed < 0:
-        seed = np.random.randint(50)
+        seed = np.random.randint(5000)
     env = gym.make(task)
     env.seed(seed)
     env.reset()

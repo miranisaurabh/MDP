@@ -440,10 +440,10 @@ if __name__ == '__main__':
     # example_use_of_gym_env()
     # main()
 
-    env_name = 'doorkey-6x6-direct'
-    # env_path = './envs/'+ env_name +'.env'
-    # env, info = load_env(env_path) # load an environment
-    env = generate_random_env(seed=-1, task='MiniGrid-DoorKey-8x8-v0')
+    env_name = 'doorkey-5x5-normal'
+    env_path = './envs/'+ env_name +'.env'
+    env, info = load_env(env_path) # load an environment
+    # env = generate_random_env(seed=-1, task='MiniGrid-DoorKey-8x8-v0')
     info = {
         'height': env.height,
         'width': env.width,

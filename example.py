@@ -46,7 +46,7 @@ def example_use_of_gym_env():
     door = env.grid.get(info['door_pos'][0], info['door_pos'][1])
     is_open = door.is_open
     is_locked = door.is_locked
-    
+    print(is_locked)
     # Determine whether agent is carrying a key
     is_carrying = env.carrying is not None
     

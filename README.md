@@ -10,15 +10,15 @@ There are results for 7 test scenes
 
 | doorkey-5x5-normal |
 |:----------------:|
-| <img src="gif/doorkey-5x5-normal.png"> |
+| <img src="gif/doorkey-5x5-normal.gif"> |
 
 | doorkey-6x6-normal   | doorkey-6x6-direct | doorkey-6x6-shortcut |
 |:----------------:|:------------------:|:----------------:|
-| <img src="gif/doorkey-6x6-normal.png"> | <img src="gif/doorkey-6x6-direct.png" > |<img src="gif/doorkey-6x6-shortcut.png" >|
+| <img src="gif/doorkey-6x6-normal.gif"> | <img src="gif/doorkey-6x6-direct.gif" > |<img src="gif/doorkey-6x6-shortcut.gif" >|
 
 | doorkey-8x8-normal   | doorkey-8x8-direct | doorkey-8x8-shortcut |
 |:----------------:|:------------------:|:----------------:|
-| <img src="gif/doorkey-8x8-normal.png"> | <img src="gif/doorkey-8x8-direct.png" > |<img src="gif/doorkey-8x8-shortcut.png" >|
+| <img src="gif/doorkey-8x8-normal.gif"> | <img src="gif/doorkey-8x8-direct.gif" > |<img src="gif/doorkey-8x8-shortcut.gif" >|
 
 ## Installation
 

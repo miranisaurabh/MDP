@@ -20,6 +20,9 @@ There are results for 7 test scenes
 |:----------------:|:------------------:|:----------------:|
 | <img src="gif/doorkey-8x8-normal.gif"> | <img src="gif/doorkey-8x8-direct.gif" > |<img src="gif/doorkey-8x8-shortcut.gif" >|
 
+## Technical Paper
+* [Saurabh Himmatlal Mirani. "Door-Key Problem" Feb. 2020](report/MDP_Report.pdf)
+
 ## Installation
 
 - Install [gym-minigrid](https://github.com/maximecb/gym-minigrid)
